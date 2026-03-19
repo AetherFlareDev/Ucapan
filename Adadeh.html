@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>Eid Mubarak · Cerita dari Hati</title>
+  <!-- Tailwind + Font Awesome + Font Poppins -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+      background: linear-gradient(145deg, #0a1120 0%, #1b2b45 50%, #2c1e3a 100%);
+    }
+    /* canvas bintang di belakang */
+    #star-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+    /* slide container */
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0.6s;
+      z-index: 5;
+      padding: 1.5rem;
+    }
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    /* card glassmorphism premium */
+    .glass-card {
+      background: rgba(10, 20, 40, 0.3);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 215, 0, 0.25);
+      border-radius: 2.5rem;
+      box-shadow: 0 30px 50px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,215,0,0.1) inset, 0 0 40px rgba(100,200,255,0.2);
+      max-width: 880px;
+      width: 100%;
+      padding: 2.8rem 2.2rem;
+    }
+    .typewriter-text {
+      font-size: clamp(1.5rem, 6vw, 2.8rem);
+      font-weight: 300;
+      line-height: 1.5;
+      color: #ffffff;
+      text-shadow: 0 0 12px #ffd966, 0 0 30px #b8860b, 0 0 45px #4a2b5e;
+      letter-spacing: 0.02em;
+      word-break: break-word;
+    }
+    /* progress bar (story style) */
+    .progress-container {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      right: 18px;
+      height: 4px;
+      display: flex;
+      gap: 6px;
+      z-index: 50;
+      padding: 0 4px;
+    }
+    .progress-segment {
+      height: 100%;
+      flex: 1;
+      background: rgba(255,255,255,0.2);
+      border-radius: 6px;
+      overflow: hidden;
+      backdrop-filter: blur(2px);
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ffd966, #c5a028, #b8860b);
+      border-radius: 6px;
+      transition: width 0.4s ease;
+      box-shadow: 0 0 12px gold;
+    }
+    /* tombol navigasi dan kontrol */
+    .nav-btn {
+      width: 52px;
+      height: 52px;
+      background: rgba(15, 25, 45, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.4rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 20px -6px rgba(0,0,0,0.6), 0 0 15px rgba(255,215,0,0.3);
+    }
+    .nav-btn:hover {
+      background: rgba(255, 215, 0, 0.25);
+      transform: scale(1.12);
+      border-color: #ffd966;
+      box-shadow: 0 0 25px gold;
+    }
+    .nav-btn:active { transform: scale(0.95); }
+    .counter-badge {
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,215,0,0.5);
+      border-radius: 40px;
+      padding: 0.5rem 1.4rem;
+      color: white;
+      font-weight: 400;
+      letter-spacing: 1px;
+      font-size: 1rem;
+      box-shadow: 0 0 20px rgba(255,215,0,0.3);
+    }
+    /* kontrol panel */
+    .panel-left { position: fixed; bottom: 24px; left: 24px; z-index: 100; display: flex; gap: 12px; flex-wrap: wrap; }
+    .panel-right { position: fixed; bottom: 24px; right: 24px; z-index: 100; display: flex; gap: 12px; flex-wrap: wrap; }
+    @media (max-width: 500px) {
+      .glass-card { padding: 2rem 1.2rem; border-radius: 2rem; }
+      .panel-left { left: 12px; bottom: 16px; gap: 8px; }
+      .panel-right { right: 12px; bottom: 16px; gap: 8px; }
+      .nav-btn { width: 44px; height: 44px; font-size: 1.2rem; }
+    }
+    /* ekstra glow */
+    .gold-glow {
+      animation: softPulse 3s infinite alternate;
+    }
+    @keyframes softPulse {
+      0% { text-shadow: 0 0 15px #ffd700, 0 0 30px #b8860b; }
+      100% { text-shadow: 0 0 25px #fff2b5, 0 0 50px #daa520; }
+    }
+    /* untuk efek transisi tambahan */
+    .fade-zoom-enter { opacity: 0; transform: scale(0.96); }
+  </style>
+</head>
+<body class="antialiased">
+
+  <!-- Canvas animasi bintang (dinamis) -->
+  <canvas id="star-canvas"></canvas>
+
+  <!-- Progress bar ala instagram story (segmen) -->
+  <div class="progress-container" id="progress-segments">
+    <!-- akan diisi javascript -->
+  </div>
+
+  <!-- Container slide -->
+  <div id="slides-container" class="relative w-full h-full"></div>
+
+  <!-- Panel kiri: navigasi & counter -->
+  <div class="panel-left">
+    <div class="nav-btn" id="prevBtn"><i class="fas fa-arrow-left"></i></div>
+    <div class="nav-btn" id="nextBtn"><i class="fas fa-arrow-right"></i></div>
+    <div class="nav-btn" id="autoBtn"><i class="fas fa-play"></i></div>
+    <div class="counter-badge" id="slideCounter">1/15</div>
+  </div>
+
+  <!-- Panel kanan: fitur tambahan -->
+  <div class="panel-right">
+    <div class="nav-btn" id="fullscreenBtn"><i class="fas fa-expand"></i></div>
+    <div class="nav-btn" id="shareBtn"><i class="fas fa-share-alt"></i></div>
+    <div class="nav-btn" id="musicBtn"><i class="fas fa-music"></i></div>
+  </div>
+
+  <!-- Library confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+
+  <script>
+    (function() {
+      // ======================= DATA TEKS (15 SLIDE) =======================
+      const slidesData = [
+        "Halo, di momen Idul Fitri yang penuh makna ini aku ingin menyampaikan sesuatu dari hati.",
+        "Selamat Hari Raya Idul Fitri 🌙✨, mohon maaf lahir dan batin 🙏",
+        "Aku sadar sebagai manusia pasti nggak luput dari salah dan khilaf.",
+        "Mungkin selama kita berteman, ada kata-kataku yang terlalu kasar, candaan yang kelewatan 😅, sikap yang kurang peka, atau hal-hal kecil yang tanpa aku sadari pernah bikin kamu nggak nyaman 😔.",
+        "Untuk semua itu, aku benar-benar minta maaf dengan tulus 🤍",
+        "Jujur, aku bersyukur banget punya teman seperti kamu 🤝.",
+        "Dari sekian banyak orang, kamu termasuk yang selalu ada, yang mau dengerin cerita 🗣️, yang ikut ketawa di saat senang 😄, dan tetap bertahan di saat keadaan nggak selalu mudah.",
+        "Banyak kenangan yang sudah kita lewati bareng, dan itu semua berarti banget buat aku ✨",
+        "Di hari yang suci ini, aku ingin kita sama-sama membuka lembaran baru 📖.",
+        "Semoga kita bisa saling memaafkan dengan hati yang lapang 🤲, melupakan hal-hal yang pernah kurang baik, dan memperbaiki hubungan kita ke depannya jadi lebih kuat dan lebih dewasa 💪",
+        "Aku juga berharap semoga kamu selalu diberi kesehatan 🏥, kebahagiaan 😊, dan keberkahan 🌟 dalam setiap langkahmu.",
+        "Semoga apa yang kamu cita-citakan bisa tercapai 🎯, dan setiap harimu dipenuhi hal-hal baik 🌈",
+        "Terima kasih sudah menjadi bagian dari perjalanan hidupku sejauh ini 🤍.",
+        "Semoga persahabatan kita tetap terjaga, nggak hanya sekarang tapi juga untuk waktu yang panjang ke depan ⏳",
+        "Sekali lagi, Selamat Idul Fitri 🌙✨, mohon maaf lahir dan batin 🙏"
+      ];
+
+      const totalSlides = slidesData.length;
+      let currentIndex = 0;
+      let autoActive = false;
+      let autoInterval = null;
+      let typingInterval = null;
+
+      // DOM elements
+      const slidesContainer = document.getElementById('slides-container');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const autoBtn = document.getElementById('autoBtn');
+      const fullscreenBtn = document.getElementById('fullscreenBtn');
+      const shareBtn = document.getElementById('shareBtn');
+      const musicBtn = document.getElementById('musicBtn');
+      const counterEl = document.getElementById('slideCounter');
+      const progressSegments = document.getElementById('progress-segments');
+
+      // ===================== GENERATE SLIDE & PROGRESS =====================
+      function buildUI() {
+        // buat progress segments
+        for (let i = 0; i < totalSlides; i++) {
+          const seg = document.createElement('div');
+          seg.className = 'progress-segment';
+          const fill = document.createElement('div');
+          fill.className = 'progress-fill';
+          fill.id = `prog-fill-${i}`;
+          seg.appendChild(fill);
+          progressSegments.appendChild(seg);
+        }
+
+        // buat slide
+        slidesData.forEach((text, idx) => {
+          const slideDiv = document.createElement('div');
+          slideDiv.className = `slide ${idx === 0 ? 'active' : ''}`;
+          slideDiv.id = `slide-${idx}`;
+
+          const card = document.createElement('div');
+          card.className = 'glass-card';
+
+          const para = document.createElement('p');
+          para.className = 'typewriter-text gold-glow';
+          para.id = `slide-text-${idx}`;
+
+          card.appendChild(para);
+          slideDiv.appendChild(card);
+          slidesContainer.appendChild(slideDiv);
+        });
+      }
+
+      // ===================== TYPEWRITER ENGINE =====================
+      function startTypewriter(slideIndex) {
+        if (typingInterval) clearInterval(typingInterval);
+        const textElement = document.getElementById(`slide-text-${slideIndex}`);
+        const fullText = slidesData[slideIndex];
+        textElement.innerHTML = ''; // kosongkan
+        let charIndex = 0;
+
+        typingInterval = setInterval(() => {
+          if (charIndex < fullText.length) {
+            textElement.innerHTML += fullText.charAt(charIndex);
+            charIndex++;
+          } else {
+            clearInterval(typingInterval);
+            typingInterval = null;
+          }
+        }, 42); // kecepatan nyaman
+      }
+
+      // ===================== UPDATE SLIDE & PROGRESS =====================
+      function updateSlide(index) {
+        // validasi
+        if (index < 0) index = 0;
+        if (index >= totalSlides) index = totalSlides - 1;
+        if (index === currentIndex && index !== 0) {
+          // jika slide sama, mungkin hanya refresh? kita tetap update typewriter?
+          // tapi untuk kasus panggil ulang, kita reset typewriter
+        }
+        currentIndex = index;
+
+        // update class active
+        document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+        document.getElementById(`slide-${currentIndex}`).classList.add('active');
+
+        // update progress fill (mimik story: segmen sebelumnya full, current partial, berikutnya 0)
+        for (let i = 0; i < totalSlides; i++) {
+          const fill = document.getElementById(`prog-fill-${i}`);
+          if (i < currentIndex) {
+            fill.style.width = '100%';
+          } else if (i === currentIndex) {
+            fill.style.width = '100%'; // kita isi penuh saat slide aktif (typewriter berjalan, progress tetap full di segmen ini)
+            // bisa juga dibuat animasi, biar simple full semua yang sudah dilewati + current
+          } else {
+            fill.style.width = '0%';
+          }
+        }
+
+        // update counter
+        counterEl.innerText = `${currentIndex+1}/${totalSlides}`;
+
+        // mulai typewriter
+        startTypewriter(currentIndex);
+
+        // jika slide terakhir, semprot confetti
+        if (currentIndex === totalSlides - 1) {
+          confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: ['#ffd700', '#c5a028', '#4b2e5e', '#0d9488'] });
+          setTimeout(() => {
+            confetti({ particleCount: 80, spread: 130, origin: { y: 0.5, x: 0.2 }, colors: ['#ffd966', '#b8860b'] });
+          }, 200);
+        }
+      }
+
+      // ===================== NAVIGASI =====================
+      function nextSlide() {
+        if (currentIndex < totalSlides - 1) {
+          updateSlide(currentIndex + 1);
+        } else {
+          // sudah di akhir, optional reset auto? 
+          if (autoActive) toggleAuto();
+        }
+      }
+
+      function prevSlide() {
+        if (currentIndex > 0) {
+          updateSlide(currentIndex - 1);
+        }
+      }
+
+      // ===================== AUTO SLIDE =====================
+      function toggleAuto() {
+        autoActive = !autoActive;
+        if (autoActive) {
+          autoBtn.innerHTML = '<i class="fas fa-pause"></i>';
+          autoInterval = setInterval(() => {
+            if (currentIndex < totalSlides - 1) {
+              nextSlide();
+            } else {
+              // jika sudah di akhir, stop auto
+              toggleAuto();
+            }
+          }, 6200); // ganti tiap 6.2 detik
+        } else {
+          autoBtn.innerHTML = '<i class="fas fa-play"></i>';
+          if (autoInterval) {
+            clearInterval(autoInterval);
+            autoInterval = null;
+          }
+        }
+      }
+
+      // ===================== FULLSCREEN =====================
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+          fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+            fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+          }
+        }
+      }
+
+      // ===================== SHARE =====================
+      function shareContent() {
+        if (navigator.share) {
+          navigator.share({
+            title: 'Ucapan Idul Fitri ✨',
+            text: 'Lihat cerita Idul Fitri yang indah ini',
+            url: window.location.href,
+          }).catch(() => {});
+        } else {
+          navigator.clipboard.writeText(window.location.href);
+          alert('🔗 Link disalin ke clipboard');
+        }
+      }
+
+      // ===================== MUSIK (opsional) =====================
+      let audio = null;
+      let musicPlaying = false;
+      function initAudio() {
+        // Gunakan audio ambient (long sample) - jika gagal, tombol tetap ada tapi nonaktif lembut
+        audio = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3'); // instrumental
+        audio.loop = true;
+        audio.volume = 0.25;
+        audio.addEventListener('error', () => {
+          musicBtn.style.opacity = '0.5';
+          musicBtn.style.pointerEvents = 'none';
+          musicBtn.title = 'Musik tidak dapat dimuat';
+        });
+      }
+      function toggleMusic() {
+        if (!audio) return;
+        if (musicPlaying) {
+          audio.pause();
+          musicBtn.innerHTML = '<i class="fas fa-music"></i>';
+        } else {
+          audio.play().catch(e => console.log('autoplay diblokir, perlu interaksi'));
+          musicBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        }
+        musicPlaying = !musicPlaying;
+      }
+
+      // ===================== SWIPE GESTURE =====================
+      let touchStartX = 0;
+      let touchEndX = 0;
+      document.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
+      document.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const diff = touchEndX - touchStartX;
+        if (Math.abs(diff) > 50) {
+          if (diff < 0) nextSlide();
+          else prevSlide();
+        }
+      }, { passive: true });
+
+      // ===================== KEYBOARD =====================
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') { nextSlide(); e.preventDefault(); }
+        if (e.key === 'ArrowLeft') { prevSlide(); e.preventDefault(); }
+      });
+
+      // ===================== BACKGROUND BINTANG (CANVAS) =====================
+      const canvas = document.getElementById('star-canvas');
+      const ctx = canvas.getContext('2d');
+      let width, height;
+      let stars = [];
+
+      function initStars() {
+        stars = [];
+        for (let i = 0; i < 220; i++) {
+          stars.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            radius: Math.random() * 2.2 + 0.8,
+            speed: Math.random() * 0.04 + 0.01,
+            alpha: Math.random() * 0.7 + 0.2,
+            color: `rgba(255, ${Math.floor(200 + Math.random()*55)}, 120, ${Math.random()*0.5+0.3})` // warna emas/putih hangat
+          });
+        }
+      }
+
+      function resizeStarCanvas() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        initStars();
+      }
+
+      function drawStars() {
+        ctx.clearRect(0, 0, width, height);
+        stars.forEach(s => {
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.radius, 0, 2 * Math.PI);
+          ctx.fillStyle = s.color || 'rgba(255,255,200,0.8)';
+          ctx.fill();
+          // gerak ke bawah (efek jatuh lembut)
+          s.y += s.speed;
+          if (s.y > height) {
+            s.y = 0;
+            s.x = Math.random() * width;
+          }
+        });
+        requestAnimationFrame(drawStars);
+      }
+
+      window.addEventListener('resize', () => {
+        resizeStarCanvas();
+      });
+
+      // ===================== INIT =====================
+      function init() {
+        buildUI();
+        resizeStarCanvas();
+        drawStars();
+        updateSlide(0); // mulai slide pertama
+
+        // inisialisasi audio
+        initAudio();
+
+        // Event listeners
+        prevBtn.addEventListener('click', prevSlide);
+        nextBtn.addEventListener('click', nextSlide);
+        autoBtn.addEventListener('click', toggleAuto);
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+        shareBtn.addEventListener('click', shareContent);
+        musicBtn.addEventListener('click', toggleMusic);
+
+        // jika fullscreen berubah via esc, ubah ikon
+        document.addEventListener('fullscreenchange', () => {
+          if (!document.fullscreenElement) {
+            fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+          } else {
+            fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+          }
+        });
+      }
+
+      // Jalankan setelah halaman siap
+      window.addEventListener('load', init);
+    })();
+  </script>
+</body>
+</html>
